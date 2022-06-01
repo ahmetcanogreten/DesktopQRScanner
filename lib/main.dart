@@ -1,43 +1,43 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:screen_capturer/screen_capturer.dart';
-import 'package:qr_code_vision/qr_code_vision.dart';
+
 import 'package:clipboard/clipboard.dart';
-import 'package:dart_reed_solomon_nullsafety/dart_reed_solomon_nullsafety.dart';
+import 'package:zxing2/qrcode.dart';
+import 'package:image/image.dart' as img;
 
 void main() async {
   runApp(const MyApp());
 }
 
-String tempImageLoc = '/tmp/captured_image.png';
+String tempImageLoc = '/home/ogreten/Desktop/captured_image.png';
 
 Future<String> captureAndReadQRCode() async {
-  late QrCode qrCode;
-
   try {
-    qrCode = QrCode();
     CapturedData? capturedData = await ScreenCapturer.instance.capture(
       mode: CaptureMode.region, // screen, window
       imagePath: tempImageLoc,
     );
+    // await Process.run('scrot', ['-s', '-o', tempImageLoc]);
 
-    final imageByte = await File(tempImageLoc).readAsBytes();
+    var image = img.decodePng(File(tempImageLoc).readAsBytesSync())!;
 
-    final im = await decodeImageFromList(imageByte);
-    final byteImage = await im.toByteData();
-    final byteListImage = byteImage!.buffer.asUint8List();
+    LuminanceSource source = RGBLuminanceSource(image.width, image.height,
+        image.getBytes(format: img.Format.abgr).buffer.asInt32List());
+    var bitmap = BinaryBitmap(HybridBinarizer(source));
 
-    qrCode.scanRgbaBytes(
-        byteListImage, capturedData!.imageWidth!, capturedData.imageHeight!);
+    var reader = QRCodeReader();
+    var result = reader.decode(bitmap);
 
-    if (qrCode.content != null) {
-      await FlutterClipboard.copy(qrCode.content!.text);
-    }
-  } on ReedSolomonException {
+    await FlutterClipboard.copy(result.text);
+
+    return result.text;
+  } on Exception {
     print('Cannot read');
+    return '';
   }
 
-  return qrCode.content?.text ?? '';
+  // return qrCode.content?.text ?? '';
 }
 
 class MyApp extends StatefulWidget {
