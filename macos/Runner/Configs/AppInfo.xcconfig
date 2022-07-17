@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = qr
+PRODUCT_NAME = desktop_qr_scanner
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.qr
+PRODUCT_BUNDLE_IDENTIFIER = com.example.desktopQrScanner
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2022 com.example. All rights reserved.
