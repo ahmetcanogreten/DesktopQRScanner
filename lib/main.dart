@@ -5,12 +5,11 @@ import 'package:screen_capturer/screen_capturer.dart';
 import 'package:clipboard/clipboard.dart';
 import 'package:zxing2/qrcode.dart';
 import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 
-void main() async {
+void main() {
   runApp(const MyApp());
 }
-
-String tempImageLoc = '/tmp/captured_image.png';
 
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -21,7 +20,21 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String? qrContentText;
+  String? tempImageLoc;
   bool isCopied = false;
+
+  @override
+  void initState() {
+    super.initState();
+    setTempDirectory();
+  }
+
+  void setTempDirectory() async {
+    Directory tempDir = await getTemporaryDirectory();
+    setState(() {
+      tempImageLoc = "${tempDir.path}/captured_qr.png";
+    });
+  }
 
   Widget buildExtractedQRString() {
     return InkWell(
@@ -55,14 +68,16 @@ class _MyAppState extends State<MyApp> {
 
   Widget buildScanQRButton() {
     return ElevatedButton(
-        onPressed: () async {
-          final readContent = await captureAndReadQRCode();
+        onPressed: tempImageLoc != null
+            ? () async {
+                final readContent = await captureAndReadQRCode();
 
-          setState(() {
-            isCopied = false;
-            qrContentText = readContent;
-          });
-        },
+                setState(() {
+                  isCopied = false;
+                  qrContentText = readContent;
+                });
+              }
+            : null,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Row(
@@ -87,7 +102,7 @@ class _MyAppState extends State<MyApp> {
         imagePath: tempImageLoc,
       );
 
-      var image = img.decodePng(File(tempImageLoc).readAsBytesSync())!;
+      var image = img.decodePng(File(tempImageLoc!).readAsBytesSync())!;
 
       LuminanceSource source = RGBLuminanceSource(image.width, image.height,
           image.getBytes(format: img.Format.abgr).buffer.asInt32List());
